@@ -472,18 +472,19 @@ export function getMoonTimes(date, lat, lng) {
     t.setUTCHours(0, 0, 0, 0);
 
     let h0 = moonHeight(t, lat, lng);
-    let rise, set, ye;
+    let rise, set, hMax = h0;
 
     // go in 2-hour chunks, each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
     for (let i = 1; i <= 24; i += 2) {
         const h1 = moonHeight(hoursLater(t, i), lat, lng);
         const h2 = moonHeight(hoursLater(t, i + 1), lat, lng);
+        hMax = Math.max(hMax, h1, h2);
         const a = (h0 + h2) / 2 - h1;
         const b = (h2 - h0) / 2;
         const xe = -b / (2 * a);
         const d = b * b - 4 * a * h1;
         let roots = 0, x1 = 0, x2 = 0;
-        ye = (a * xe + b) * xe + h1;
+        const ye = (a * xe + b) * xe + h1;
 
         if (d >= 0) {
             const dx = sqrt(d) / (abs(a) * 2);
@@ -515,10 +516,11 @@ export function getMoonTimes(date, lat, lng) {
     if (rise !== undefined) result.rise = new Date(refineMoonCross(hoursLater(t, rise).valueOf(), lat, lng));
     if (set !== undefined) result.set = new Date(refineMoonCross(hoursLater(t, set).valueOf(), lat, lng));
 
-    // no crossing all day: flag which side the moon stays on, setting both like getTimes does
+    // no crossing all day: flag which side the moon stays on by testing its highest sampled height
+    // against the rise/set threshold (already baked into moonHeight), setting both like getTimes does
     if (rise === undefined && set === undefined) {
-        result.alwaysUp = ye > 0;
-        result.alwaysDown = ye <= 0;
+        result.alwaysUp = hMax > 0;
+        result.alwaysDown = hMax <= 0;
     }
 
     return result;

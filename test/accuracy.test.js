@@ -111,3 +111,25 @@ test('getMoonTimes flags no-crossing days instead of returning a bogus time', ()
         }
     }
 });
+
+// regression for #186: on a no-crossing day the alwaysUp/alwaysDown direction must agree with the
+// library's own position model, not with an extrapolated parabola extremum that can flip sign.
+test('getMoonTimes no-crossing flag matches the actual altitude sign (issue #186)', () => {
+    const lat = 78, lng = 78;
+    for (const date of ['2022-01-14', '2022-01-15', '2022-01-16']) {
+        const r = SunCalc.getMoonTimes(new Date(`${date}T12:00:00Z`), lat, lng);
+        assert.equal(r.rise, undefined, `unexpected rise on ${date}`);
+        assert.equal(r.set, undefined, `unexpected set on ${date}`);
+
+        const dayStart = new Date(`${date}T00:00:00Z`).valueOf();
+        let max = -Infinity, min = Infinity;
+        for (let h = 0; h <= 24; h += 0.5) {
+            const {altitude} = SunCalc.getMoonPosition(new Date(dayStart + h * 3600e3), lat, lng);
+            max = Math.max(max, altitude);
+            min = Math.min(min, altitude);
+        }
+        assert.ok(min > 0, `${date}: moon dips below horizon, fixture assumption wrong`);
+        assert.equal(r.alwaysUp, true, `${date}: moon stays up (${min.toFixed(1)}..${max.toFixed(1)}°) but not alwaysUp`);
+        assert.equal(r.alwaysDown, false, `${date}: moon stays up but flagged alwaysDown`);
+    }
+});
