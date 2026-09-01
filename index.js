@@ -167,7 +167,7 @@ export function getTimes(date, lat, lng, height = 0) {
     // Anchor to the input date's UTC solar day regardless of its time-of-day, killing the historical
     // "always pass noon" footgun where an early-morning Date returned the previous day's events:
     // round to that day's noon, offset to the nearest local solar noon, then let solarTransit refine.
-    const d = round(round(toDays(date)) - J0 - lw / (2 * PI));
+    const d = round(toDays(date) - J0 - lw / (2 * PI));
     const dt = solarTransit(d + J0 + lw / (2 * PI), lw);
     const dec = sunCoords(toDaysTT(dt)).dec; // declination at transit, shared by every rise/set solve
 

@@ -133,3 +133,15 @@ test('getMoonTimes no-crossing flag matches the actual altitude sign (issue #186
         assert.equal(r.alwaysDown, false, `${date}: moon stays up but flagged alwaysDown`);
     }
 });
+
+// regression for #187: getTimes must anchor to the local solar day containing the input instant.
+// Rounding to the nearest UTC noon first put antimeridian longitudes a full day off whenever the
+// input landed within minutes of that UTC boundary — the local solar day is ~12 h out of phase there.
+test('getTimes resolves the anchored solar day at every longitude (issue #187)', () => {
+    const day = Date.UTC(2026, 7, 19, 12), lat = 40, hourMs = 3600e3;
+    for (const lng of [-180, -179.9, -179.7, -179.676, -179.6, -90, 0, 90, 179.9, 180]) {
+        const anchor = new Date(day - (lng / 15) * hourMs); // that longitude's own local solar noon
+        const off = (SunCalc.getTimes(anchor, lat, lng).solarNoon - anchor) / hourMs;
+        assert.ok(Math.abs(off) < 1, `lng ${lng}: solarNoon ${off.toFixed(2)} h from local solar noon`);
+    }
+});
