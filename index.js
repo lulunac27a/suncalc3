@@ -1,5 +1,5 @@
 
-// shortcuts for easier to read formulas
+// shortcuts for easier-to-read formulas
 const {PI, sin, cos, tan, asin, atan2: atan, acos, sqrt, abs, round} = Math;
 const rad = PI / 180;
 
@@ -41,7 +41,7 @@ function toDaysTT(d) {
 
 // north-based clockwise azimuth in degrees (0 = N, 90 = E, 180 = S, 270 = W)
 function azimuth(H, phi, dec) {
-    return (atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi)) / rad + 540) % 360;
+    return (atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi)) / rad + 540) % 360; // add 540 degrees (180 + 360) to remainder operator to avoid returning negative azimuth angle values
 }
 function altitude(H, phi, dec) {
     return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H));
